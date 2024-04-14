@@ -63,3 +63,5 @@ class ProfileView(APIView):
         return Response({
             'Error': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+    
+

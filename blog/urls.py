@@ -9,4 +9,6 @@ urlpatterns = [
 
 
     path('create-comment/', views.CreateComment.as_view()),
+    path('comments/<int:pk>/update/', views.UpdateComment.as_view(), name='update_comment'),
+    path('comments/<int:pk>/delete/', views.DestroyComment.as_view()),
 ]

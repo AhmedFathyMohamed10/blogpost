@@ -69,3 +69,32 @@ class CreateComment(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UpdateComment(generics.UpdateAPIView):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_update(self, serializer):
+        comment = self.get_object()
+        author = self.request.user 
+        # Only user can update its own comment
+        if comment.author != author:
+            raise PermissionDenied("You are not allowed to update this comment.")
+        serializer.save(author=author)
+
+class DestroyComment(generics.DestroyAPIView):
+    queryset = Comment.objects.all()
+    permission_classes = [
+        IsAuthenticated,
+    ]
+
+    def perform_destroy(self, instance):
+        comment = self.get_object()
+        author = self.request.user
+        if comment.author != author:
+            raise PermissionDenied("You don't have permission to delete this comment!")
+        instance.delete()
+
+
+        
