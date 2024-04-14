@@ -3,8 +3,12 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
+
 from .models import *
 from .serializers import *
+
+from django.shortcuts import get_object_or_404
 
 class CreatePost(APIView):
 
@@ -18,6 +22,29 @@ class CreatePost(APIView):
             serializer.save()  # Save the post
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdatePost(generics.UpdateAPIView):
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        post = self.get_object()
+        if post.author != user:
+            raise PermissionDenied("You are not allowed to update this post.")
+        serializer.save(author=user)
+
+class DeletePost(generics.DestroyAPIView):
+    queryset = Post.objects.all()
+    permission_classes = [IsAuthenticated,]
+
+    def perform_destroy(self, instance):
+        if instance.author != self.request.user:
+            raise PermissionDenied("You don't have permission to delete this post!")
+        instance.delete()
+
 
 class ListPosts(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)

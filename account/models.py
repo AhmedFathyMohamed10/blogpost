@@ -7,6 +7,9 @@ from django.dispatch import receiver
 # Create your models here.
 class Profile(models.Model):
     user = models.OneToOneField(User, related_name='profile', on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=100, default='')
+    last_name = models.CharField(max_length=100, default='')
+    age = models.IntegerField(default=20)
     
     def __str__(self) -> str:
         return str(self.user.username)

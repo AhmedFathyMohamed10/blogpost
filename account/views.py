@@ -2,13 +2,15 @@ from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth.models import User
-from django.contrib.auth.hashers import make_password
-from .serializers import UserRegisterSerializer, UserSerializer
-from django.contrib.auth.models import User
-
 from rest_framework import permissions
 from rest_framework import authentication
+
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import User
+
+
+from .serializers import UserRegisterSerializer, UserSerializer, UserProfileSerializer
+from .models import Profile
 
 
 class RegisterUserView(APIView):
@@ -39,3 +41,25 @@ class GetUsers(generics.ListAPIView):
         authentication.SessionAuthentication,
         authentication.TokenAuthentication,
     )
+
+class ProfileView(APIView):
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        data = request.data.copy()  # Make a copy of request data to modify it
+        data['user'] = user.pk  # Set the user field based on the authenticated user
+        profile = user.profile  # Get the profile associated with the user
+        serializer = UserProfileSerializer(instance=profile, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            print(f'First: {profile.first_name}')
+            user.first_name = profile.first_name
+            user.last_name = profile.last_name
+            user.save()
+            print(f'User first name: {user.first_name}')
+            return Response({
+                'Details': 'Data submitted Successfully.',
+                'Data': serializer.data
+            }, status=status.HTTP_201_CREATED)
+        return Response({
+            'Error': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
