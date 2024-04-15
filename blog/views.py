@@ -8,10 +8,8 @@ from rest_framework.exceptions import PermissionDenied
 from .models import *
 from .serializers import *
 
-from django.shortcuts import get_object_or_404
 
 class CreatePost(APIView):
-
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, format=None):
@@ -46,11 +44,14 @@ class DeletePost(generics.DestroyAPIView):
         instance.delete()
 
 
-class ListPosts(generics.ListAPIView):
+class ListPosts(APIView):
     permission_classes = (IsAuthenticated,)
-    queryset = Post.objects.all()
-    serializer_class = PostSerializer
 
+    def get(self, request, format=None):
+        posts = Post.objects.all()
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
 class CreateComment(APIView):
     permission_classes = (IsAuthenticated,)
@@ -97,4 +98,14 @@ class DestroyComment(generics.DestroyAPIView):
         instance.delete()
 
 
-        
+# Search and Filtering 
+class SearchPosts(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        query = request.query_params.get('q')
+        posts = Post.objects.filter(title__icontains=query)
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
